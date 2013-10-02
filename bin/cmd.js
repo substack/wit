@@ -1,4 +1,32 @@
 #!/usr/bin/env node
+var argv = require('optimist').argv;
+var spawn = require('child_process').spawn;
+var exec = require('child_process').exec;
+
+if (argv._[0] === 'start') {
+    var args = [ '-l', '^(wpa_supplicant|dhclient)' ];
+    exec('pgrep', function (err, stdout) {
+        if (stdout.length > 2) {
+            console.error(
+                'WARNING: these processes are already already running:\n'
+                + stdout.split('\n')
+                    .map(function (line) { return '  ' + line })
+                    .join('\n')
+                + '\nProbably nothing will work while those processes are'
+                + ' running.'
+            );
+        }
+        var args = [ '-i', 'wlan2', '-c', '/etc/wpa_supplicant.conf' ];
+        spawn('wpa_supplicant', args, { stdio: 'inherit' });
+        spawn('dhclient', [ 'wlan2', '-d' ], { stdio: 'inherit' });
+    });
+    return;
+}
+if (argv._[0] === 'add') {
+    console.log('usage: wit add SSID');
+    return;
+}
+
 //var createMenu = require('terminal-menu');
 var table = require('text-table');
 var fs = require('fs');
@@ -19,20 +47,23 @@ var iwscan = require('../lib/scan.js');
 iwscan(function (err, signals) {
     if (err) return console.error(err);
     
-    var rows = Object.keys(signals).sort(cmp).map(function (key) {
+    var rows = Object.keys(signals).sort(cmp).map(map);
+    
+    function map (key) {
         var sig = signals[key];
         
-        var enc = (function (e) {
-            if (!e) return 'FREE';
-            if (e.WPA || e.RSN) return 'WPA';
-            if (e['Group cipher']) return 'WPA'; // e['Group cipher']._value;
+        var enc = (function () {
+            if (sig.WPA || sig.RSN) return 'WPA';
+            if (!sig['HT operation']) return 'FREE';
             return '???';
-        })(sig['HT operation'] || sig.RSN);
+        })();
         
         if (enc !== 'FREE' && known[sig.SSID]) enc += '*';
         
-        return [ sig.SSID, sig.signal, enc ];
-    });
+        var ssid = sig.SSID;
+        if (ssid.length > 30) ssid = ssid.slice(0, 30 - 3) + '...';
+        return [ ssid, sig.signal, enc ];
+    }
     console.log(table(rows));
     
     function cmp (a, b) {
