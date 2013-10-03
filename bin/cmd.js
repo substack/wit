@@ -5,7 +5,7 @@ var exec = require('child_process').exec;
 
 if (argv._[0] === 'start') {
     var args = [ '-l', '^(wpa_supplicant|dhclient)' ];
-    exec('pgrep', function (err, stdout) {
+    exec('pgrep ' + args.join(' '), function (err, stdout) {
         if (stdout.length > 2) {
             console.error(
                 'WARNING: these processes are already already running:\n'
