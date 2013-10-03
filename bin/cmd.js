@@ -27,7 +27,6 @@ if (argv._[0] === 'add') {
     return;
 }
 
-//var createMenu = require('terminal-menu');
 var table = require('text-table');
 var fs = require('fs');
 var known = fs.readFileSync('/etc/wpa_supplicant.conf', 'utf8')
@@ -69,22 +68,4 @@ iwscan(function (err, signals) {
     function cmp (a, b) {
         return a.SSID < b.SSID ? -1 : 1;
     }
-    
-    /*
-    var menu = createMenu({ width: 70, x: 2, y: 2 });
-    menu.reset();
-    menu.write('WIRELESS SIGNALS');
-    menu.write('----------------------------------');
-    
-    Object.keys(signals).forEach(function (ap) {
-        menu.add(signals[ap].SSID + ' ' + ap);
-    });
-    menu.add('EXIT');
-    
-    menu.on('select', function (label) {
-        menu.close();
-    });
-    
-    menu.createStream().pipe(process.stdout);
-    */
 });
