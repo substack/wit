@@ -19,7 +19,7 @@ if (argv._[0] === 'start') {
         }
         var args = [ '-i', 'wlan2', '-c', '/etc/wpa_supplicant.conf' ];
         spawn('wpa_supplicant', args, { stdio: 'inherit' });
-        exec('dhclient', [ 'wlan2', '-r' ], function () {
+        spawn('dhclient', [ 'wlan2', '-r' ]).on('exit', function () {
             spawn('dhclient', [ 'wlan2', '-d' ], { stdio: 'inherit' });
         });
     });
