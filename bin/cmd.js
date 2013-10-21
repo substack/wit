@@ -2,6 +2,7 @@
 var argv = require('optimist').argv;
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
+var concat = require('concat-stream');
 
 if (argv._[0] === 'start') {
     var args = [ '-l', '^(wpa_supplicant|dhclient)' ];
@@ -18,12 +19,22 @@ if (argv._[0] === 'start') {
         }
         var args = [ '-i', 'wlan2', '-c', '/etc/wpa_supplicant.conf' ];
         spawn('wpa_supplicant', args, { stdio: 'inherit' });
-        spawn('dhclient', [ 'wlan2', '-d' ], { stdio: 'inherit' });
+        exec('dhclient', [ 'wlan2', '-r' ], function () {
+            spawn('dhclient', [ 'wlan2', '-d' ], { stdio: 'inherit' });
+        });
     });
     return;
 }
 if (argv._[0] === 'add') {
-    console.log('usage: wit add SSID');
+    if (argv._.length < 3) {
+        console.error('usage: wit add SSID PASSPHRASE');
+        return process.exit(1);
+    }
+    spawn('wpa_passphrase', argv._[1], argv._[2])
+        .pipe(concat(function (body) {
+            
+        }))
+    ;
     return;
 }
 
@@ -52,20 +63,22 @@ iwscan(function (err, signals) {
         var sig = signals[key];
         
         var enc = (function () {
-            if (sig.WPA || sig.RSN) return 'WPA';
-            if (!sig['HT operation']) return 'FREE';
+            if (sig.wpa || sig.rsn) return 'WPA';
+            if (!sig['ht operation']) {
+                return 'FREE';
+            }
             return '???';
         })();
         
-        if (enc !== 'FREE' && known[sig.SSID]) enc += '*';
+        if (enc !== 'FREE' && known[sig.ssid]) enc += '*';
         
-        var ssid = sig.SSID;
+        var ssid = sig.ssid;
         if (ssid.length > 30) ssid = ssid.slice(0, 30 - 3) + '...';
         return [ ssid, sig.signal, enc ];
     }
     console.log(table(rows));
     
     function cmp (a, b) {
-        return a.SSID < b.SSID ? -1 : 1;
+        return a.ssid < b.ssid ? -1 : 1;
     }
 });

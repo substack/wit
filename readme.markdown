@@ -2,12 +2,6 @@
 
 command-line linux wireless toolkit
 
-# 
-
-Connecting to 802.11 wireless access points on the command line is not very
-complicated once you can figure out how to turn off all the default services
-that get in your way and make everything difficult.
-
 This tool is a tiny wrapper around the `iw` and `wpa_supplicant` commands to
 make wireless networking from the command line simple and pleasant.
 
