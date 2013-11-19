@@ -3,6 +3,7 @@ var argv = require('optimist').argv;
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var concat = require('concat-stream');
+//var tmenu = require('terminal-menu');
 
 if (argv._[0] === 'start') {
     var args = [ '-l', '^(wpa_supplicant|dhclient)' ];
@@ -39,22 +40,9 @@ if (argv._[0] === 'add') {
 }
 
 var table = require('text-table');
-var fs = require('fs');
-var known = fs.readFileSync('/etc/wpa_supplicant.conf', 'utf8')
-    .split('\n').reduce(function (acc, line) {
-        var m;
-        if (m = /^\s*ssid="([^"]*)"/.exec(line)) {
-            acc.current = m[1]
-        }
-        if (m = /^\s*psk=(\S+)/.exec(line)) {
-            acc.networks[acc.current] = true;
-        }
-        return acc;
-    }, { current: {}, networks: {} }).networks
-;
 
-var iwscan = require('../lib/scan.js');
-iwscan(function (err, signals) {
+var iwlist = require('../lib/list.js');
+iwlist(function (err, signals) {
     if (err) return console.error(err);
     
     var rows = Object.keys(signals).sort(cmp).map(map);
