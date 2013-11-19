@@ -42,31 +42,7 @@ if (argv._[0] === 'add') {
 var table = require('text-table');
 
 var iwlist = require('../lib/list.js');
-iwlist(function (err, signals) {
+iwlist(function (err, rows) {
     if (err) return console.error(err);
-    
-    var rows = Object.keys(signals).sort(cmp).map(map);
-    
-    function map (key) {
-        var sig = signals[key];
-        
-        var enc = (function () {
-            if (sig.wpa || sig.rsn) return 'WPA';
-            if (!sig['ht operation']) {
-                return 'FREE';
-            }
-            return '???';
-        })();
-        
-        if (enc !== 'FREE' && known[sig.ssid]) enc += '*';
-        
-        var ssid = sig.ssid;
-        if (ssid.length > 30) ssid = ssid.slice(0, 30 - 3) + '...';
-        return [ ssid, sig.signal, enc ];
-    }
     console.log(table(rows));
-    
-    function cmp (a, b) {
-        return a.ssid < b.ssid ? -1 : 1;
-    }
 });
