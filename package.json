@@ -4,7 +4,7 @@
   "description": "command-line wireless 802.11 manager for linux",
   "bin": {
     "wit": "bin/cmd.js",
-    "wit-import": "bin/import.js",
+    "wit-import": "bin/import.js"
   },
   "dependencies": {
     "concat-stream": "~1.0.1",
