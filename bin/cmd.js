@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-var argv = require('optimist').argv;
+var argv = require('optimist')
+    .default('i','wlan0')
+    .argv;
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var concat = require('concat-stream');
@@ -18,10 +20,10 @@ if (argv._[0] === 'start') {
                 + ' running.'
             );
         }
-        var args = [ '-i', 'wlan2', '-c', '/etc/wpa_supplicant.conf' ];
+        var args = [ '-i', argv.i, '-c', '/etc/wpa_supplicant.conf' ];
         spawn('wpa_supplicant', args, { stdio: 'inherit' });
-        spawn('dhclient', [ 'wlan2', '-r' ]).on('exit', function () {
-            spawn('dhclient', [ 'wlan2', '-d' ], { stdio: 'inherit' });
+        spawn('dhclient', [ argv.i, '-r' ]).on('exit', function () {
+            spawn('dhclient', [ argv.i, '-d' ], { stdio: 'inherit' });
         });
     });
     return;
@@ -45,4 +47,4 @@ var iwlist = require('../lib/list.js');
 iwlist(function (err, rows) {
     if (err) return console.error(err);
     console.log(table(rows));
-});
+}, argv.i);
