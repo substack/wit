@@ -1,0 +1,8 @@
+wit
+
+  List all wireless signals.
+
+wit start
+
+  Start the `wit` service, launching wpa_supplicant and dhclient.
+
