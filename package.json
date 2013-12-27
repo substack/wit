@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "concat-stream": "~1.0.1",
-    "optimist": "~0.6.0",
+    "minimist": "0.0.5",
     "split": "~0.2.10",
     "stream-combiner": "~0.0.2",
     "text-table": "~0.1.1",
