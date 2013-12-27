@@ -8,38 +8,41 @@ var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var concat = require('concat-stream');
 var table = require('text-table');
-var getIface = require('../lib/iface.js');
 
-//var tmenu = require('terminal-menu');
+var getIface = require('../lib/iface.js');
+var iwscan = require('../lib/scan.js');
+
+var preferred = [ 'sudoroom' ];
+function accessible (sig) {
+    return !sig.wpa && !sig.rsn && !sig['ht operation'];
+}
 
 if (argv._.length === 0 || argv._[0] === 'auto') {
-    getInterface(function (iface) {
-        console.log(iface);
-    });
-}
-if (argv._[0] === 'start') {
-    var args = [ '-l', '^(wpa_supplicant|dhclient)' ];
-    getInterface(function (iface) {
-        exec('pgrep ' + args.join(' '), function (err, stdout) {
-            if (stdout.length > 2) {
-                console.error(
-                    'WARNING: these processes are already already running:\n'
-                    + stdout.split('\n')
-                        .map(function (line) { return '  ' + line })
-                        .join('\n')
-                    + '\nProbably nothing will work while those processes are'
-                    + ' running.'
-                );
-            }
-            var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
-            spawn('wpa_supplicant', args, { stdio: 'inherit' });
-            spawn('dhclient', [ iface, '-r' ]).on('exit', function () {
-                spawn('dhclient', [ iface, '-d' ], { stdio: 'inherit' });
-            });
+    return getSorted(function (err, sorted) {
+        if (err) return console.error(err);
+        
+        sorted.forEach(function (r) {
+            console.log(r.ssid, r.signal, r['last seen']);
         });
     });
-    return;
 }
+if (argv._[0] === 'start') return (function () {
+    var pending = 2;
+    var iface;
+    checkRunning(function (running) { if (!running) next() })
+    getInterface(function (ifc) { next(iface = ifc) });
+    
+    function next () {
+        if (--pending !== 0) return;
+        
+        var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
+        spawn('wpa_supplicant', args, { stdio: 'inherit' });
+        spawn('dhclient', [ iface, '-r' ]).on('exit', function () {
+            spawn('dhclient', [ iface, '-d' ], { stdio: 'inherit' });
+        });
+    }
+})()
+
 if (argv._[0] === 'add') {
     if (argv._.length < 3) {
         console.error('usage: wit add SSID PASSPHRASE');
@@ -51,14 +54,6 @@ if (argv._[0] === 'add') {
         }))
     ;
     return;
-}
-
-if (argv._[0] === 'select') {
-    var iwlist = require('../lib/list.js');
-    iwlist(function (err, rows) {
-        if (err) return console.error(err);
-        console.log(table(rows));
-    });
 }
 
 function getInterface (cb) {
@@ -82,5 +77,52 @@ function getInterface (cb) {
             );
         }
         else cb(ifaces[0]);
+    });
+}
+
+function checkRunning (cb) {
+    var args = [ '-l', '^(wpa_supplicant|dhclient)' ];
+    exec('pgrep ' + args.join(' '), function (err, stdout) {
+        if (stdout.length > 2) {
+            console.error(
+                'WARNING: these processes are already already running:\n'
+                + stdout.split('\n')
+                    .map(function (line) { return '  ' + line })
+                    .join('\n')
+                + '\nProbably nothing will work while those processes are'
+                + ' running.'
+            );
+            cb(true);
+        }
+        else if (cb) cb(false);
+    });
+}
+
+function getSorted (cb) {
+    getInterface(function (iface) {
+        iwscan(iface, function (err, rows) {
+            if (err) return cb(err);
+            
+            var sorted = Object.keys(rows)
+                .map(function (key) { return rows[key] })
+                .filter(accessible)
+                .sort(cmp)
+            ;
+            cb(null, sorted);
+            
+            function cmp (a, b) {
+                var pa = preferred.indexOf(a.ssid) >= 0;
+                var pb = preferred.indexOf(b.ssid) >= 0;
+                if (pa ^ pb) return pa ? -1 : 1;
+                
+                var sa = parseFloat(a.signal);
+                var sb = parseFloat(b.signal);
+                
+                var la = parseInt(a['last seen']);
+                var lb = parseInt(b['last seen']);
+                
+                return sa < sb ? 1 : -1;
+            }
+        });
     });
 }
