@@ -28,7 +28,7 @@ var preferred = networks.map(function (n) { return n.ssid })
 ;
 
 function accessible (sig) {
-    return !sig.wpa && !sig.rsn && !sig['ht operation'];
+    return encType(sig) === 'FREE' || known[sig.ssid];
 }
 
 if (argv._[0] === 'list') {
@@ -180,7 +180,7 @@ function getSorted (cb) {
             var notAvailable = sorted.filter(function (s) {
                 return !accessible(s);
             });
-            cb(null, iface, sorted, notAvailable);
+            cb(null, iface, available, notAvailable);
             
             function cmp (a, b) {
                 var pa = preferred.indexOf(a.ssid) >= 0;
