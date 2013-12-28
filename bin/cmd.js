@@ -46,8 +46,18 @@ if (argv._[0] === 'list') {
     return;
 }
 if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
-    getSorted(function (err, iface, available, notAvailable) {
+    var pending = 2;
+    checkRunning(function (running) { if (!running) next() })
+    
+    var iface, available, notAvailable;
+    getSorted(function (err, a, b, c) {
         if (err) return console.error(err);
+        iface = a, available = b, notAvailable = c;
+        next();
+    });
+    
+    function next () {
+        if (--pending !== 0) return;
         
         if (available.length === 0) {
             console.error('NO AVAILABLE SIGNALS');
@@ -84,7 +94,7 @@ if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
                 spawn('dhclient', [ iface, '-d' ], { stdio: 'inherit' });
             });
         }
-    });
+    }
 })();
 if (argv._[0] === 'start') return (function () {
     var pending = 2;
