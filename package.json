@@ -1,6 +1,6 @@
 {
   "name": "wit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "command-line wireless 802.11 manager for linux",
   "bin": {
     "wit": "bin/cmd.js",
