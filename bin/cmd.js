@@ -17,15 +17,49 @@ function accessible (sig) {
     return !sig.wpa && !sig.rsn && !sig['ht operation'];
 }
 
-if (argv._.length === 0 || argv._[0] === 'auto') {
-    return getSorted(function (err, sorted) {
+if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
+    getSorted(function (err, iface, available, notAvailable) {
         if (err) return console.error(err);
         
-        sorted.forEach(function (r) {
-            console.log(r.ssid, r.signal, r['last seen']);
-        });
+        /*
+        console.log(table(available.map(fmt)));
+        console.log(Array(51).join('-'));
+        console.log(table(notAvailable.map(fmt)));
+        */
+        if (available.length === 0) {
+            console.error('NO AVAILABLE SIGNALS');
+            return retry();
+        }
+        console.log('CONNECTING TO', available[0].ssid);
+        
+        function fmt (r) {
+            return [ r.ssid, r.signal, r['last seen'], encType(r) ];
+        }
+        
+        if (encType(available[0]) === 'FREE') {
+            spawn('iw', [ 'dev', iface, 'disconnect' ])
+                .on('exit', ondisconnect)
+            ;
+        }
+        function ondisconnect () {
+            var ssid = available[0].ssid;
+            var ps = spawn('iw',
+                [ 'dev', iface, 'connect', '-w', ssid ],
+                { stdio: 'inherit' }
+            );
+            ps.on('exit', function (code) {
+                if (code !== 0) return ondisconnect();
+                dhclient();
+            });
+        }
+        
+        function dhclient () {
+            spawn('dhclient', [ iface, '-r' ]).on('exit', function () {
+                spawn('dhclient', [ iface, '-d' ], { stdio: 'inherit' });
+            });
+        }
     });
-}
+})();
 if (argv._[0] === 'start') return (function () {
     var pending = 2;
     var iface;
@@ -105,10 +139,13 @@ function getSorted (cb) {
             
             var sorted = Object.keys(rows)
                 .map(function (key) { return rows[key] })
-                .filter(accessible)
                 .sort(cmp)
             ;
-            cb(null, sorted);
+            var available = sorted.filter(accessible);
+            var notAvailable = sorted.filter(function (s) {
+                return !accessible(s);
+            });
+            cb(null, iface, sorted, notAvailable);
             
             function cmp (a, b) {
                 var pa = preferred.indexOf(a.ssid) >= 0;
@@ -125,4 +162,10 @@ function getSorted (cb) {
             }
         });
     });
+}
+
+function encType (r) {
+    if (r.wpa || r.rsn) return 'WPA';
+    if (r['ht operation']) return '???';
+    return 'FREE';
 }
