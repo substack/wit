@@ -12,7 +12,18 @@ var table = require('text-table');
 var getIface = require('../lib/iface.js');
 var iwscan = require('../lib/scan.js');
 
-var preferred = [ 'sudoroom' ];
+var mkdirp = require('mkdirp');
+var fs = require('fs');
+var path = require('path');
+
+var HOME = process.env.HOME || process.env.USERDIR;
+var configDir = path.join(HOME, '.config', 'wit');
+
+try { var networks = require(path.join(configDir, 'networks.json')) }
+catch (e) { networks = [] }
+
+var preferred = networks.map(function (n) { return n.ssid });
+
 function accessible (sig) {
     return !sig.wpa && !sig.rsn && !sig['ht operation'];
 }
@@ -78,15 +89,30 @@ if (argv._[0] === 'start') return (function () {
 })()
 
 if (argv._[0] === 'add') {
+    if (argv._.length === 2) {
+        mkdirp.sync(configDir);
+        
+        networks.push({ ssid: argv._[1] });
+        fs.writeFile(
+            path.join(configDir, 'networks.json'),
+            JSON.stringify(networks),
+            function (err) {
+                if (err) console.error(err)
+            }
+        );
+        return;
+    }
     if (argv._.length < 3) {
-        console.error('usage: wit add SSID PASSPHRASE');
+        console.error('usage:');
+        console.error('  wit add SSID');
+        console.error('  wit add SSID PASSPHRASE');
         return process.exit(1);
     }
-    spawn('wpa_passphrase', argv._[1], argv._[2])
-        .pipe(concat(function (body) {
-            
-        }))
-    ;
+    var ps = spawn('wpa_passphrase', argv._[1], argv._[2])
+    ps.stderr.pipe(process.stderr);
+    ps.stdout.pipe(
+        fs.createWriteStream('/etc/wpa_supplicant.conf', { flags: 'a' })
+    );
     return;
 }
 

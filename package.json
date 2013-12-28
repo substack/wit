@@ -12,7 +12,8 @@
     "split": "~0.2.10",
     "stream-combiner": "~0.0.2",
     "text-table": "~0.1.1",
-    "through": "~2.3.4"
+    "through": "~2.3.4",
+    "mkdirp": "~0.3.5"
   },
   "repository": {
     "type": "git",
