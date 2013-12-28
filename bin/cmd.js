@@ -11,6 +11,7 @@ var table = require('text-table');
 
 var getIface = require('../lib/iface.js');
 var iwscan = require('../lib/scan.js');
+var known = require('../lib/known.js');
 
 var mkdirp = require('mkdirp');
 var fs = require('fs');
@@ -22,7 +23,9 @@ var configDir = path.join(HOME, '.config', 'wit');
 try { var networks = require(path.join(configDir, 'networks.json')) }
 catch (e) { networks = [] }
 
-var preferred = networks.map(function (n) { return n.ssid });
+var preferred = networks.map(function (n) { return n.ssid })
+    .concat(Object.keys(known))
+;
 
 function accessible (sig) {
     return !sig.wpa && !sig.rsn && !sig['ht operation'];
@@ -52,11 +55,18 @@ if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
         }
         console.log('CONNECTING TO', available[0].ssid);
         
-        if (encType(available[0]) === 'FREE') {
-            spawn('iw', [ 'dev', iface, 'disconnect' ])
-                .on('exit', ondisconnect)
-            ;
+        if (known[available[0].ssid]) {
+            var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
+            spawn('wpa_supplicant', args, { stdio: 'inherit' });
         }
+        else if (encType(available[0]) !== 'FREE') {
+            return retry();
+        }
+        
+        spawn('iw', [ 'dev', iface, 'disconnect' ])
+            .on('exit', ondisconnect)
+        ;
+        
         function ondisconnect () {
             var ssid = available[0].ssid;
             var ps = spawn('iw',
