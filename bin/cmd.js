@@ -28,24 +28,29 @@ function accessible (sig) {
     return !sig.wpa && !sig.rsn && !sig['ht operation'];
 }
 
+if (argv._[0] === 'list') {
+    getSorted(function (err, iface, available, notAvailable) {
+        if (err) return console.error(err);
+        
+        console.log(table(available.map(fmt)));
+        console.log(Array(51).join('-'));
+        console.log(table(notAvailable.map(fmt)));
+        
+        function fmt (r) {
+            return [ r.ssid, r.signal, r['last seen'], encType(r) ];
+        }
+    });
+    return;
+}
 if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
     getSorted(function (err, iface, available, notAvailable) {
         if (err) return console.error(err);
         
-        /*
-        console.log(table(available.map(fmt)));
-        console.log(Array(51).join('-'));
-        console.log(table(notAvailable.map(fmt)));
-        */
         if (available.length === 0) {
             console.error('NO AVAILABLE SIGNALS');
             return retry();
         }
         console.log('CONNECTING TO', available[0].ssid);
-        
-        function fmt (r) {
-            return [ r.ssid, r.signal, r['last seen'], encType(r) ];
-        }
         
         if (encType(available[0]) === 'FREE') {
             spawn('iw', [ 'dev', iface, 'disconnect' ])
