@@ -96,22 +96,6 @@ if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
         }
     }
 })();
-if (argv._[0] === 'start') return (function () {
-    var pending = 2;
-    var iface;
-    checkRunning(function (running) { if (!running) next() })
-    getInterface(function (ifc) { next(iface = ifc) });
-    
-    function next () {
-        if (--pending !== 0) return;
-        
-        var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
-        spawn('wpa_supplicant', args, { stdio: 'inherit' });
-        spawn('dhclient', [ iface, '-r' ]).on('exit', function () {
-            spawn('dhclient', [ iface, '-d' ], { stdio: 'inherit' });
-        });
-    }
-})()
 
 if (argv._[0] === 'add') {
     if (argv._.length === 2) {

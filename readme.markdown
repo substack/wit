@@ -16,10 +16,6 @@ wit list
 
   List all wireless signals.
 
-wit start
-
-  Start the `wit` service, launching wpa_supplicant and dhclient.
-
 wit add SSID
 
   Add a preferred open network.

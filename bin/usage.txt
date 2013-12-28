@@ -1,14 +1,11 @@
 wit
 
-  Automatically connect to an accessible network.
+  Automatically connect to an accessible network,
+  launching wpa_supplicant as necessary.
 
 wit list
 
   List all wireless signals.
-
-wit start
-
-  Start the `wit` service, launching wpa_supplicant and dhclient.
 
 wit add SSID
 
