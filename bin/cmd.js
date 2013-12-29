@@ -141,7 +141,8 @@ if (argv._[0] === 'search') {
         if (terms.test && terms.test(key)) {
             console.log(key, '=>', known[key]);
         }
-        else if (key.toLowerCase().indexOf(terms.toLowerCase()) >= 0) {
+        else if (terms.toLowerCase
+        && key.toLowerCase().indexOf(terms.toLowerCase()) >= 0) {
             console.log(key, '=>', known[key]);
         }
     });

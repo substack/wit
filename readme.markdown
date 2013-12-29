@@ -10,11 +10,19 @@ make wireless networking from the command line simple and pleasant.
 ```
 wit
 
-  Automatically connect to an accessible network.
+  Automatically connect to an accessible network,
+  launching wpa_supplicant as necessary.
 
 wit list
 
   List all wireless signals.
+
+wit search TERMS...
+
+  Search the known network list by SSID, printing the SSID and password.
+
+  If TERMS is empty, print all the SSIDs.
+  If TERMS is guarded in //s, treat the search as a regex.
 
 wit add SSID
 
