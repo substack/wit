@@ -131,6 +131,23 @@ if (argv._[0] === 'add') {
     return;
 }
 
+if (argv._[0] === 'search') {
+    var terms = argv._.slice(1).join(' ');
+    if (/^\//.test(terms) && /\/\w*$/.test(terms)) {
+        var flags = terms.split('/').slice(-1)[0] || 'i';
+        terms = RegExp(terms.replace(/^\/|\/\w*$/g, ''), flags);
+    }
+    Object.keys(known).forEach(function (key) {
+        if (terms.test && terms.test(key)) {
+            console.log(key, '=>', known[key]);
+        }
+        else if (key.toLowerCase().indexOf(terms.toLowerCase()) >= 0) {
+            console.log(key, '=>', known[key]);
+        }
+    });
+    return;
+}
+
 return usage(1);
 
 function getInterface (cb) {
