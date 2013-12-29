@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 var minimist = require('minimist');
 var argv = minimist(process.argv.slice(2), {
-    'alias': { 'i': [ 'interface', 'iface' ] }
+    'alias': {
+        'i': [ 'interface', 'iface' ],
+        'h': 'help'
+    },
+    'boolean': [ 'h' ]
 });
 
 var spawn = require('child_process').spawn;
@@ -16,6 +20,8 @@ var known = require('../lib/known.js');
 var mkdirp = require('mkdirp');
 var fs = require('fs');
 var path = require('path');
+
+if (argv.h || argv.help) return usage();
 
 var HOME = process.env.HOME || process.env.USERDIR;
 var configDir = path.join(HOME, '.config', 'wit');
@@ -125,6 +131,8 @@ if (argv._[0] === 'add') {
     return;
 }
 
+return usage(1);
+
 function getInterface (cb) {
     if (argv.i) return process.nextTick(function () { cb(argv.i) });
     
@@ -203,4 +211,12 @@ function encType (r) {
     if (r.wpa || r.rsn) return 'WPA';
     if (r['ht operation']) return '???';
     return 'FREE';
+}
+
+function usage (code) {
+    var rs = fs.createReadStream(__dirname + '/usage.txt');
+    rs.pipe(process.stdout);
+    if (code !== undefined) {
+        rs.on('end', function () { process.exit(code) });
+    }
 }
