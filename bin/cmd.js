@@ -123,7 +123,7 @@ if (argv._[0] === 'add') {
         console.error('  wit add SSID PASSPHRASE');
         return process.exit(1);
     }
-    var ps = spawn('wpa_passphrase', argv._[1], argv._[2])
+    var ps = spawn('wpa_passphrase', [ argv._[1], argv._[2] ]);
     ps.stderr.pipe(process.stderr);
     ps.stdout.pipe(
         fs.createWriteStream('/etc/wpa_supplicant.conf', { flags: 'a' })
