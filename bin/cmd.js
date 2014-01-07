@@ -34,7 +34,9 @@ var preferred = networks.map(function (n) { return n.ssid })
 ;
 
 function accessible (sig) {
-    return encType(sig) === 'FREE' || known[sig.ssid];
+    return encType(sig) === 'FREE' || known[sig.ssid]
+        || preferred.indexOf(sig.ssid) >= 0
+    ;
 }
 
 if (argv._[0] === 'list') {
@@ -75,7 +77,8 @@ if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
             var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
             spawn('wpa_supplicant', args, { stdio: 'inherit' });
         }
-        else if (encType(available[0]) !== 'FREE') {
+        else if (encType(available[0]) !== 'FREE'
+        && preferred.indexOf(available[0].ssid) < 0) {
             return retry();
         }
         
