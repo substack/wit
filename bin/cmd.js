@@ -48,12 +48,14 @@ if (argv._[0] === 'list') {
         console.log(table(notAvailable.map(fmt)));
         
         function fmt (r) {
-            return [ r.ssid, r.signal, r['last seen'], encType(r) ];
+            return [ r.ssid, r.signal, r['last seen'], encType(r) ].map(String);
         }
     });
     return;
 }
-if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
+if (argv._.length === 0 || argv._[0] === 'auto'
+|| argv._[0] === 'connect') return (function retry () {
+    var addr = argv._[0] === 'connect' ? argv._[1] : null;
     var pending = 2;
     checkRunning(function (running) { if (!running) next() })
     
@@ -71,14 +73,25 @@ if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
             console.error('NO AVAILABLE SIGNALS');
             return retry();
         }
-        console.log('CONNECTING TO', available[0].ssid);
+        var index = 0;
+        if (addr) {
+            for (; index < available.length; index++) {
+                if (available[index].ssid === addr) break;
+            }
+            if (index === available.length) {
+                console.log(addr + ' NOT AVAILABLE');
+                return retry();
+            }
+        }
         
-        if (known[available[0].ssid]) {
+        console.log('CONNECTING TO', available[index].ssid);
+        
+        if (known[available[index].ssid]) {
             var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
             spawn('wpa_supplicant', args, { stdio: 'inherit' });
         }
-        else if (encType(available[0]) !== 'FREE'
-        && preferred.indexOf(available[0].ssid) < 0) {
+        else if (encType(available[index]) !== 'FREE'
+        && preferred.indexOf(available[index].ssid) < 0) {
             return retry();
         }
         
@@ -87,7 +100,7 @@ if (argv._.length === 0 || argv._[0] === 'auto') return (function retry () {
         ;
         
         function ondisconnect () {
-            var ssid = available[0].ssid;
+            var ssid = available[index].ssid;
             var ps = spawn('iw',
                 [ 'dev', iface, 'connect', '-w', ssid ],
                 { stdio: 'inherit' }
