@@ -13,6 +13,10 @@ wit
   Automatically connect to an accessible network,
   launching wpa_supplicant as necessary.
 
+win connect ESSID
+
+  Connect to a particular ESSID.
+
 wit list
 
   List all wireless signals.
