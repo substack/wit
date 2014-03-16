@@ -56,6 +56,9 @@ if (argv._[0] === 'list') {
 if (argv._.length === 0 || argv._[0] === 'auto'
 || argv._[0] === 'connect') return (function retry () {
     var addr = argv._[0] === 'connect' ? argv._[1] : null;
+    var m = /^\/(.+)\/(\w*)$/.exec(addr);
+    if (m) addr = RegExp(m[1], m[2]);
+    
     var pending = 2;
     checkRunning(function (running) { if (!running) next() })
     
@@ -76,7 +79,9 @@ if (argv._.length === 0 || argv._[0] === 'auto'
         var index = 0;
         if (addr) {
             for (; index < available.length; index++) {
-                if (available[index].ssid === addr) break;
+                var ssid = available[index].ssid;
+                if (addr === ssid) break;
+                if (addr.test && addr.test(ssid)) break;
             }
             if (index === available.length) {
                 console.log(addr + ' NOT AVAILABLE');
