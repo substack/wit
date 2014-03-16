@@ -16,6 +16,7 @@ wit
 win connect ESSID
 
   Connect to a particular ESSID.
+  If ESSID is surrounded in (//)s, connect to the first matching result.
 
 wit list
 
