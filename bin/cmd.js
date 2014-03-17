@@ -107,11 +107,16 @@ if (argv._.length === 0 || argv._[0] === 'auto'
         function ondisconnect () {
             var ssid = available[index].ssid;
             var ps = spawn('iw',
-                [ 'dev', iface, 'connect', '-w', ssid ],
-                { stdio: 'inherit' }
+                [ 'dev', iface, 'connect', '-w', ssid ]
             );
+            ps.stdout.pipe(process.stdout);
+            ps.stderr.pipe(process.stderr);
+            var failed = false;
+            ps.stdout.on('data', function (buf) {
+                if (/failed to connect/.test(buf)) failed = true;
+            });
             ps.on('exit', function (code) {
-                if (code !== 0) return ondisconnect();
+                if (code !== 0 || failed) return ondisconnect();
                 dhclient();
             });
         }
