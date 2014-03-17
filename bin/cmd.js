@@ -111,12 +111,16 @@ if (argv._.length === 0 || argv._[0] === 'auto'
             );
             ps.stdout.pipe(process.stdout);
             ps.stderr.pipe(process.stderr);
-            var failed = false;
-            ps.stdout.on('data', function (buf) {
-                if (/failed to connect/.test(buf)) failed = true;
-            });
+            var data = '';
+            ps.stdout.on('data', function (buf) { data += buf });
+            ps.stderr.on('data', function (buf) { data += buf });
+            
             ps.on('exit', function (code) {
-                if (code !== 0 || failed) return ondisconnect();
+                var ok = !/failed to connect/i.test(data);
+                var already = /operation already in progress/i.test(data);
+                if ((code !== 0 || !ok) && !already) {
+                    return ondisconnect();
+                }
                 dhclient();
             });
         }
