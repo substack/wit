@@ -115,6 +115,7 @@ if (argv._.length === 0 || argv._[0] === 'auto'
             return retry();
         }
         
+        var attempts = 0;
         spawn('iw', [ 'dev', iface, 'disconnect' ])
             .on('exit', function () {
                 setTimeout(ondisconnect, 1000);
@@ -122,6 +123,8 @@ if (argv._.length === 0 || argv._[0] === 'auto'
         ;
         
         function ondisconnect () {
+            if (++ attempts === 5) return retry();
+            
             var ssid = available[index].ssid;
             var ps = spawn('iw',
                 [ 'dev', iface, 'connect', '-w', ssid ]
@@ -133,14 +136,8 @@ if (argv._.length === 0 || argv._[0] === 'auto'
             ps.stderr.on('data', function (buf) { data += buf });
             
             ps.on('exit', function (code) {
-                var ok = !/failed to connect/i.test(data);
-                if (/connected/.test(data)) return dhclient();
-                setTimeout(function () {
-                    if ((code !== 0 || !ok) && !connected) {
-                        return retry();
-                    }
-                    else dhclient();
-                }, 1000);
+                if (code !== 0 && !connected) return ondisconnect();
+                dhclient();
             });
         }
         
