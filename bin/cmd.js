@@ -101,7 +101,9 @@ if (argv._.length === 0 || argv._[0] === 'auto'
         }
         
         spawn('iw', [ 'dev', iface, 'disconnect' ])
-            .on('exit', ondisconnect)
+            .on('exit', function () {
+                setTimeout(ondisconnect, 1000);
+            })
         ;
         
         function ondisconnect () {
