@@ -53,6 +53,7 @@ if (argv._[0] === 'list') {
     });
     return;
 }
+var connected = false, wpa;
 if (argv._.length === 0 || argv._[0] === 'auto'
 || argv._[0] === 'connect') return (function retry () {
     var addr = argv._[0] === 'connect' ? argv._[1] : null;
@@ -92,8 +93,22 @@ if (argv._.length === 0 || argv._[0] === 'auto'
         console.log('CONNECTING TO', available[index].ssid);
         
         if (known[available[index].ssid]) {
-            var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
-            spawn('wpa_supplicant', args, { stdio: 'inherit' });
+            if (!wpa) {
+                var args = [ '-i', iface, '-c', '/etc/wpa_supplicant.conf' ];
+                var wps = spawn('wpa_supplicant', args);
+                wpa = true;
+                wps.stdout.pipe(process.stderr);
+                wps.stderr.pipe(process.stderr);
+                var ondata = function (buf) {
+                    if (/CTRL-EVENT-CONNECTED/.test(buf)) connected = true;
+                    if (/CTRL-EVENT-DISCONNECTED/.test(buf)) {
+                        connected = false;
+                        retry();
+                    }
+                };
+                wps.stdout.on('data', ondata);
+                wps.stderr.on('data', ondata);
+            }
         }
         else if (encType(available[index]) !== 'FREE'
         && preferred.indexOf(available[index].ssid) < 0) {
@@ -119,11 +134,13 @@ if (argv._.length === 0 || argv._[0] === 'auto'
             
             ps.on('exit', function (code) {
                 var ok = !/failed to connect/i.test(data);
-                var already = /operation already in progress/i.test(data);
-                if ((code !== 0 || !ok) && !already) {
-                    return ondisconnect();
-                }
-                dhclient();
+                if (/connected/.test(data)) return dhclient();
+                setTimeout(function () {
+                    if ((code !== 0 || !ok) && !connected) {
+                        return retry();
+                    }
+                    else dhclient();
+                }, 1000);
             });
         }
         
