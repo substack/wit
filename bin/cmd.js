@@ -5,7 +5,8 @@ var argv = minimist(process.argv.slice(2), {
         'i': [ 'interface', 'iface' ],
         'h': 'help'
     },
-    'boolean': [ 'h' ]
+    'boolean': [ 'h' ],
+    'string': [ '_' ]
 });
 
 var spawn = require('child_process').spawn;
