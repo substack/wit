@@ -13,7 +13,7 @@ wit
   Automatically connect to an accessible network,
   launching wpa_supplicant as necessary.
 
-win connect ESSID
+wit connect ESSID
 
   Connect to a particular ESSID.
   If ESSID is surrounded in (//)s, connect to the first matching result.
